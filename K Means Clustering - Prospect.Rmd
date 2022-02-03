@@ -1,0 +1,303 @@
+---
+title: "HW4"
+author: "Vishnu Rahul"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r load-packages, include=FALSE}
+library(dplyr)
+library(readxl)
+library(cluster)
+library(ggplot2)
+library(tidyr)
+```
+
+```{r fileimport, include=FALSE}
+prospects <- read_excel("~/Downloads/prospect.xls")
+```
+
+#exclude the fields LOCATION and ID
+```{r exclude, include=TRUE}
+prospects$ID <- NULL
+prospects$LOC <- NULL 
+```
+
+#Check for NA
+```{r NA, include=TRUE}
+any_is_na = apply(prospects, 2, function(x) any(is.na(x)))
+any_is_na
+sum(any_is_na)
+```
+
+#Explore the data
+```{r Explore, include=TRUE}
+# plot histogram to see spread of interval data
+hist(prospects$AGE)
+hist(prospects$INCOME)
+hist(prospects$`FICO>=700`)
+
+#get count of boolean and ordinal values
+prospects %>% 
+  group_by(SEX) %>%
+  summarise(no_rows = length(SEX))
+prospects %>% 
+  group_by(MARRIED) %>%
+  summarise(no_rows = length(MARRIED))
+prospects %>% 
+  group_by(OWNHOME) %>%
+  summarise(no_rows = length(OWNHOME))
+prospects %>% 
+  group_by(CLIMATE) %>%
+  summarise(no_rows = length(CLIMATE))
+prospects %>% 
+  group_by(`FICO>=700`) %>%
+  summarise(no_rows = length(`FICO>=700`))
+
+# convert NA values in SEX to "M" because it is the majority class
+prospects$SEX[is.na(prospects$SEX)] <- "M"
+
+# convert "M" to 1 and "F" to 0
+prospects$SEX[prospects$SEX == "M"] <- 1
+prospects$SEX[prospects$SEX == "F"] <- 0
+
+# convert NA values in MARRIED to 1 because it is the majority class
+prospects$MARRIED[is.na(prospects$MARRIED)] <- 1
+
+# convert NA values in OWNHOME to 0 because it is the majority class
+prospects$OWNHOME[is.na(prospects$OWNHOME)] <- 0
+
+# convert NA values in FICO>=700 to 1 because it is the majority class
+prospects$`FICO>=700`[is.na(prospects$`FICO>=700`)] <- 1
+
+# convert NA values in AGE and INCOME to the mean of the respective attribute
+prospects$AGE[is.na(prospects$AGE)] = mean(prospects$AGE, na.rm = T)
+prospects$INCOME[is.na(prospects$INCOME)] = mean(prospects$INCOME, na.rm = T)
+
+# convert all the boolean/ordinal attributes into a factor
+prospects$CLIMATE <- as.factor(prospects$CLIMATE)
+prospects$OWNHOME <- as.factor(prospects$OWNHOME)
+prospects$MARRIED <- as.factor(prospects$MARRIED)
+prospects$SEX <- as.factor(prospects$SEX)
+```
+#Check for NA
+```{r NA, include=TRUE}
+any_is_na = apply(prospects, 2, function(x) any(is.na(x)))
+any_is_na
+sum(any_is_na)
+```
+#Construct k means model with k=4
+```{r kmeans, include=TRUE}
+set.seed(7)
+km <- kmeans(prospects, 4, nstart = 100)
+
+#Number of points in each cluster
+km$size
+
+#cluster means
+km$centers
+
+#variances within each cluster
+km$withinss
+
+#variances between each cluster (between is much higher than within => clusters are better)
+km$betweenss
+
+#quality of the cluster
+km$betweenss/km$totss 
+# Within cluster sum of squares by cluster: 63%
+
+```
+#Cluster Characteristics
+```{r kmeans, include=TRUE}
+cluster_one   <- prospects[km$cluster == 1,]
+cluster_two   <- prospects[km$cluster == 2,]
+cluster_three <- prospects[km$cluster == 3,]
+cluster_four  <- prospects[km$cluster == 4,]
+
+
+cluster_one %>% 
+  group_by(SEX) %>%
+  summarise(no_rows = length(SEX))
+cluster_one %>% 
+  group_by(MARRIED) %>%
+  summarise(no_rows = length(MARRIED))
+cluster_one %>% 
+  group_by(OWNHOME) %>%
+  summarise(no_rows = length(OWNHOME))
+cluster_one %>% 
+  group_by(CLIMATE) %>%
+  summarise(no_rows = length(CLIMATE))
+cluster_one %>% 
+  group_by(`FICO>=700`) %>%
+  summarise(no_rows = length(`FICO>=700`))
+
+
+cluster_two %>% 
+  group_by(SEX) %>%
+  summarise(no_rows = length(SEX))
+cluster_two %>% 
+  group_by(MARRIED) %>%
+  summarise(no_rows = length(MARRIED))
+cluster_two %>% 
+  group_by(OWNHOME) %>%
+  summarise(no_rows = length(OWNHOME))
+cluster_two %>% 
+  group_by(CLIMATE) %>%
+  summarise(no_rows = length(CLIMATE))
+cluster_two %>% 
+  group_by(`FICO>=700`) %>%
+  summarise(no_rows = length(`FICO>=700`))
+
+cluster_three %>% 
+  group_by(SEX) %>%
+  summarise(no_rows = length(SEX))
+cluster_three %>% 
+  group_by(MARRIED) %>%
+  summarise(no_rows = length(MARRIED))
+cluster_three %>% 
+  group_by(OWNHOME) %>%
+  summarise(no_rows = length(OWNHOME))
+cluster_three %>% 
+  group_by(CLIMATE) %>%
+  summarise(no_rows = length(CLIMATE))
+cluster_three %>% 
+  group_by(`FICO>=700`) %>%
+  summarise(no_rows = length(`FICO>=700`))
+
+cluster_four %>% 
+  group_by(SEX) %>%
+  summarise(no_rows = length(SEX))
+cluster_four %>% 
+  group_by(MARRIED) %>%
+  summarise(no_rows = length(MARRIED))
+cluster_four %>% 
+  group_by(OWNHOME) %>%
+  summarise(no_rows = length(OWNHOME))
+cluster_four %>% 
+  group_by(CLIMATE) %>%
+  summarise(no_rows = length(CLIMATE))
+cluster_four %>% 
+  group_by(`FICO>=700`) %>%
+  summarise(no_rows = length(`FICO>=700`))
+
+
+cluster_one %>%
+  gather(attributes, value, 1:2) %>%
+  ggplot(aes(x = value)) +
+  geom_histogram(fill = 'lightblue2', color = 'black') +
+  facet_wrap(~attributes, scales = 'free_x') +
+  labs(x="Values", y="Frequency") +
+  theme_bw()
+
+cluster_two %>%
+  gather(attributes, value, 1:2) %>%
+  ggplot(aes(x = value)) +
+  geom_histogram(fill = 'lightblue2', color = 'black') +
+  facet_wrap(~attributes, scales = 'free_x') +
+  labs(x="Values", y="Frequency") +
+  theme_bw()
+
+cluster_three %>%
+  gather(attributes, value, 1:2) %>%
+  ggplot(aes(x = value)) +
+  geom_histogram(fill = 'lightblue2', color = 'black') +
+  facet_wrap(~attributes, scales = 'free_x') +
+  labs(x="Values", y="Frequency") +
+  theme_bw()
+
+cluster_four %>%
+  gather(attributes, value, 1:2) %>%
+  ggplot(aes(x = value)) +
+  geom_histogram(fill = 'lightblue2', color = 'black') +
+  facet_wrap(~attributes, scales = 'free_x') +
+  labs(x="Values", y="Frequency") +
+  theme_bw()
+
+
+# Cluster 1
+# Mostly males around the age of 30-40 and income around 50k-60k; who are un-married, who dont own a home, live in climate 20 and fico score is less than 700
+
+
+# Cluster 2
+# Roughly equal number of male and female around the age of 40-53 and income around 38k - 50k; who are married, who dont own a home, live in climate 20 and fico score is almost equally distributed between FICO_Score < 700 and FICO_Score>=700
+
+
+# Cluster 3
+# Mostly males around the age of 45-55 and income around 58k-66k; who are married, who dont own a home, live in climate 20 and fico score is greater than 700
+
+
+# Cluster 4
+# Mostly Female with age around 30 to 50 and income around 15k - 35k who are married, who dont own a home, live in climate 20 and fico score is less than 700
+```  
+  
+#plot the clusters NA KM
+```{r km plot, include=TRUE}
+#Cluster visualization for Age V/s Income
+plot(prospects[,1:2],col=(km$cluster))
+
+#Overall customer visualization
+plot(prospects,col=(km$cluster))
+```
+##Elbow Method for finding the optimal number of clusters
+```{r elbow plot, include=TRUE}
+#Elbow Method for finding the optimal number of clusters
+set.seed(123)
+# Compute and plot wss for k = 2 to k = 15.
+k.max <- 15
+data <- prospects
+wss <- sapply(1:k.max, 
+              function(k){kmeans(data, k, nstart=100)$tot.withinss})
+#plot wss
+plot(1:k.max, wss,
+     type="b", pch = 19, frame = FALSE, 
+     xlab="Number of clusters K",
+     ylab="Total within-clusters sum of squares")
+
+#we choose k= 6
+```
+#rerun kmeans model with optimal k = 6
+```{r rerun, include=TRUE}
+km1 <- kmeans(prospects, 6, nstart = 100)
+plot(prospects[,1:2],col=(km1$cluster))
+
+km1
+#we can see that Within cluster sum of squares by cluster improved to 71.5 %
+```
+
+# Check Silhouette measure for k = 6 (if it closes to 1, means good)
+```{r Sil, include=TRUE}
+library("cluster")
+
+avg_sil <- function(k){
+  Data <- prospects
+  kmModel <- kmeans(Data,centers = k, nstart = 100)
+  ss <- silhouette(kmModel$cluster, dist(data))
+  mean(ss[,3])
+}
+
+avg_sil(6)
+
+# the average Silhouette measure = 0.2522056 which is good 
+```
+
+#rerun kmeans model with optimal k = 8
+```{r rerun2, include=TRUE}
+km2 <- kmeans(prospects, 8, nstart = 100)
+km2
+plot(prospects[,1:2],col=(km2$cluster))
+#we can see that Within cluster sum of squares by cluster improved to 
+# (between_SS / total_SS =  76.5 %)
+```
+
+# Check Silhouette measure for k = 8 
+```{r Sil2, include=TRUE}
+avg_sil(8)
+
+# the average Silhouette measure = 0.2481758 which is still good 
+
+# Based on theWithin cluster sum of squares by cluster and Silhouette measure, we choose k=8
+```
