@@ -3,6 +3,7 @@
 Download the file prospects.csv and load it into R. The meaning of the fields is as follows
 (interval means continuous):
 
+<img width="656" alt="Screen Shot 2022-02-02 at 8 19 43 PM" src="https://user-images.githubusercontent.com/89628033/152270651-389ffaff-ef90-45ac-a502-769908cbd208.png">
 
 In your clustering model exclude the fields LOCATION and ID. Use R to answer the questions below.
 (a) Use the K-means method to cluster the prospects dataset. Set the number of clusters to four. How many points are in each cluster? What are cluster means and variances?
